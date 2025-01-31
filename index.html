@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP Verification</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
+    .container { max-width: 400px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+    h2 { text-align: center; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; }
+    .error { color: red; font-size: 12px; text-align: center; }
+    .success { color: green; font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>OTP Verification</h2>
+  
+  <!-- Mobile Number Input -->
+  <input type="text" id="mobile" placeholder="Enter your mobile number" />
+  <button id="sendOTPBtn">Send OTP</button>
+
+  <!-- OTP Verification -->
+  <input type="text" id="otp" placeholder="Enter OTP" style="display:none;" />
+  <button id="verifyOTPBtn" style="display:none;" disabled>Verify OTP</button>
+
+  <p id="status" class="error" style="display:none;"></p>
+  <p id="successMsg" class="success" style="display:none;">OTP verified successfully!</p>
+</div>
+
+<script>
+  const sendOTPBtn = document.getElementById('sendOTPBtn');
+  const verifyOTPBtn = document.getElementById('verifyOTPBtn');
+  const mobileInput = document.getElementById('mobile');
+  const otpInput = document.getElementById('otp');
+  const statusMessage = document.getElementById('status');
+  const successMessage = document.getElementById('successMsg');
+  let generatedOTP = '';
+
+  // Send OTP function
+  sendOTPBtn.addEventListener('click', async () => {
+    const mobileNumber = mobileInput.value;
+    
+    if (!mobileNumber) {
+      statusMessage.textContent = 'Please enter a valid mobile number!';
+      statusMessage.style.display = 'block';
+      return;
+    }
+    
+    // Send OTP request to backend
+    try {
+      const response = await fetch('/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile: mobileNumber })
+      });
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        statusMessage.style.display = 'none';
+        otpInput.style.display = 'block';
+        verifyOTPBtn.style.display = 'block';
+        generatedOTP = data.otp; // This should be securely generated and handled in the backend
+      } else {
+        statusMessage.textContent = data.message || 'Something went wrong. Please try again.';
+        statusMessage.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      statusMessage.textContent = 'Error sending OTP. Please try again later.';
+      statusMessage.style.display = 'block';
+    }
+  });
+
+  // Verify OTP function
+  verifyOTPBtn.addEventListener('click', async () => {
+    const enteredOTP = otpInput.value;
+    
+    if (enteredOTP === generatedOTP) {
+      successMessage.style.display = 'block';
+      statusMessage.style.display = 'none';
+      verifyOTPBtn.disabled = true; // Disable verify button after success
+    } else {
+      statusMessage.textContent = 'Invalid OTP. Please try again.';
+      statusMessage.style.display = 'block';
+    }
+  });
+</script>
+
+</body>
+</html>
